@@ -1,15 +1,16 @@
-package main
+package test
 
 import (
 	"fmt"
 	"sync"
+	"testing"
 )
 
-func main() {
+func TestRate(t *testing.T) {
 	var wg sync.WaitGroup
 	//инициализация
 
-	rate := rateLmt{
+	rate := ratelimiter.rateLmt{
 		maxSameTime:  5,  //максимальное количество одновременных задач
 		maxPerMinute: 30, //максимальное количество задач в течении минуты
 	}
