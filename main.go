@@ -2,20 +2,21 @@ package main
 
 import (
 	"fmt"
+	"rateLimit/ratelimiter"
 	"sync"
 )
 
 func main() {
 	var wg sync.WaitGroup
 	//инициализация
-	rate := Ratelimiter.RateLmt{
-		maxSameTime:  5,  //максимальное количество одновременных задач
-		maxPerMinute: 30, //максимальное количество задач в течении минуты
+	rate := ratelimiter.RateLmt{
+		MaxSameTime:  5,  //максимальное количество одновременных задач
+		MaxPerMinute: 30, //максимальное количество задач в течении минуты
 	}
 
 	wg.Add(1)
 	ch := make(chan int)
-	go rate.Ratelimiter.Ratelimit(&wg, ch)
+	go rate.Ratelimit(&wg, ch)
 
 	for i := 1; i < 100; i++ {
 		ch <- i
