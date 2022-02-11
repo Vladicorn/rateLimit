@@ -19,14 +19,14 @@ func (rateLmt *RateLmt) Ratelimit(wg *sync.WaitGroup, ch <-chan int) {
 	j := 1
 	t := time.Now()
 	timeMax := 60 * time.Second
-	done := make(chan bool)
+	done := make(chan bool) //канал о выполнении задачи
 
 	for {
 		if (time.Since(t) < timeMax) && (j <= rateLmt.MaxPerMinute) {
 			if i <= rateLmt.MaxSameTime {
 
 				c, ok := <-ch
-				go SimplTask(done, c)
+				go SimplTask(done, c) //выполнение задачи
 				if !ok {
 					break
 				}
@@ -34,7 +34,7 @@ func (rateLmt *RateLmt) Ratelimit(wg *sync.WaitGroup, ch <-chan int) {
 				i++
 				j++
 			} else {
-
+				//когда максимальное одновременных каналов
 				select {
 				case <-done:
 					i--
@@ -43,6 +43,7 @@ func (rateLmt *RateLmt) Ratelimit(wg *sync.WaitGroup, ch <-chan int) {
 				}
 			}
 		} else {
+			//когда превышено количество в минуту
 			select {
 			case <-time.After(timeMax - time.Since(t)):
 				j = 0
