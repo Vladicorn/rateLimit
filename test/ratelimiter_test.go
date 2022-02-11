@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 	"testing"
+	"https://github.com/Vladicorn/rateLimit/blob/main/ratelimiter/ratelimiter.go"
+	
 )
 
 func TestRate(t *testing.T) {
@@ -17,7 +19,7 @@ func TestRate(t *testing.T) {
 
 	wg.Add(1)
 	ch := make(chan int)
-	go rate.ratelimit(&wg, ch)
+	go rate.ratelimiterratelimit(&wg, ch)
 
 	for i := 1; i < 100; i++ {
 		ch <- i
