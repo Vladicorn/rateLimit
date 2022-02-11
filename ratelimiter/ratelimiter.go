@@ -8,8 +8,8 @@ import (
 )
 
 type rateLmt struct {
-	maxSameTime  int
-	maxPerMinute int
+	maxSameTime  int //максимальное количество одновременных задач
+	maxPerMinute int //максимальное количество задач в течении минуты
 }
 
 func (rateLmt *rateLmt) ratelimit(wg *sync.WaitGroup, ch <-chan int) {
