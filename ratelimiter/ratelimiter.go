@@ -7,12 +7,12 @@ import (
 	"time"
 )
 
-type rateLmt struct {
-	maxSameTime  int //максимальное количество одновременных задач
-	maxPerMinute int //максимальное количество задач в течении минуты
+type RateLmt struct {
+	MaxSameTime  int //максимальное количество одновременных задач
+	MaxPerMinute int //максимальное количество задач в течении минуты
 }
 
-func (rateLmt *rateLmt) ratelimit(wg *sync.WaitGroup, ch <-chan int) {
+func (rateLmt *RateLmt) Ratelimit(wg *sync.WaitGroup, ch <-chan int) {
 	defer wg.Done()
 
 	i := 1
@@ -22,8 +22,8 @@ func (rateLmt *rateLmt) ratelimit(wg *sync.WaitGroup, ch <-chan int) {
 	done := make(chan bool)
 
 	for {
-		if (time.Since(t) < timeMax) && (j <= rateLmt.maxPerMinute) {
-			if i <= rateLmt.maxSameTime {
+		if (time.Since(t) < timeMax) && (j <= rateLmt.MaxPerMinute) {
+			if i <= rateLmt.MaxSameTime {
 
 				c, ok := <-ch
 				go SimplTask(done, c)

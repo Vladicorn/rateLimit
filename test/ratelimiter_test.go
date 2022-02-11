@@ -4,15 +4,13 @@ import (
 	"fmt"
 	"sync"
 	"testing"
-	"https://github.com/Vladicorn/rateLimit/blob/main/ratelimiter/ratelimiter.go"
-	
 )
 
 func TestRate(t *testing.T) {
 	var wg sync.WaitGroup
 	//инициализация
 
-	rate := ratelimiter.rateLmt{
+	rate := Ratelimiter.rateLmt{
 		maxSameTime:  5,  //максимальное количество одновременных задач
 		maxPerMinute: 30, //максимальное количество задач в течении минуты
 	}
