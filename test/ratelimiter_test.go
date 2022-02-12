@@ -6,26 +6,27 @@ import (
 	"rateLimit/ratelimiter"
 	"sync"
 	"testing"
+	"time"
 )
 
 func TestRate(t *testing.T) {
 	var wg sync.WaitGroup
-	//инициализация
 
+	//инициализация
 	rate := ratelimiter.RateLmt{
-		MaxSameTime:  5,  //максимальное количество одновременных задач
-		MaxPerMinute: 50, //максимальное количество задач в течении минуты
+		MaxSameTime:  7,  //максимальное количество одновременных задач
+		MaxPerMinute: 15, //максимальное количество задач в течении минуты
 	}
 
 	wg.Add(1)
 	ch := make(chan int)
 	go rate.Ratelimit(&wg, ch)
 
-	for i := 1; i < 100; i++ {
+	for i := 1; i <= 40; i++ {
 		ch <- i
 	}
 
 	close(ch)
 	wg.Wait()
-	fmt.Println("END")
+	fmt.Println("END", time.Now())
 }

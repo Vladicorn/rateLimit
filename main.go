@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+	//Пользоваться тестом
 	var wg sync.WaitGroup
 	//инициализация
 	rate := ratelimiter.RateLmt{

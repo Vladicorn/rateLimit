@@ -2,7 +2,6 @@ package ratelimiter
 
 import (
 	"fmt"
-	"math/rand"
 	"sync"
 	"time"
 )
@@ -14,63 +13,105 @@ type RateLmt struct {
 
 func (rateLmt *RateLmt) Ratelimit(wg *sync.WaitGroup, ch <-chan int) {
 	defer wg.Done()
+	var wg1 sync.WaitGroup
 
-	i := 1
-	j := 1
+	i := 0         //счетчик текущих задач
+	j := 0         // счетчик в минуту
+	countTask := 0 //счетчик неотработаных
 	t := time.Now()
+	flagOk := false //Флаг, триггер для послед канала
+	bufChan := -1   //буфферное значение канала
 	timeMax := 60 * time.Second
 	done := make(chan bool) //канал о выполнении задачи
 
+exit:
 	for {
-		if (time.Since(t) < timeMax) && (j <= rateLmt.MaxPerMinute) {
-			if i <= rateLmt.MaxSameTime {
+		if (time.Since(t) < timeMax) && (j < rateLmt.MaxPerMinute) {
+			if i < rateLmt.MaxSameTime {
 
-				c, ok := <-ch
-				go SimplTask(done, c) //выполнение задачи
-				if !ok {
-					break
+				if bufChan != -1 {
+					wg1.Add(1)
+					go SimplTask(&wg1, done, bufChan) //выполнение задачи
+					countTask++
+					i++
+					j++
+					bufChan = -1
+
+				} else {
+					c, ok := <-ch
+					if !ok {
+						break exit
+					}
+					wg1.Add(1)
+					go SimplTask(&wg1, done, c) //выполнение задачи
+					countTask++
+					i++
+					j++
 				}
 
-				i++
-				j++
 			} else {
 				//когда максимальное одновременных каналов
-				select {
-				case <-done:
-					i--
-					break
-					return
+				<-done
+				countTask--
+				i--
+			}
+			flagOk = true
+
+		} else {
+			if flagOk {
+				c, ok := <-ch
+				if !ok {
+					break exit
+				} else {
+					bufChan = c
+					flagOk = false
 				}
 			}
-		} else {
-			//когда превышено количество в минуту
+
+			timer := time.NewTimer(timeMax - time.Since(t))
 			select {
-			case <-time.After(timeMax - time.Since(t)):
+			case <-done:
+				countTask--
+				i--
+				break
+			case <-timer.C:
 				j = 0
 				t = time.Now()
-				break
 			}
+
 		}
 	}
+
+	for {
+		if countTask == 0 {
+			break
+		} else {
+			<-done
+			countTask--
+		}
+	}
+	wg1.Wait()
 }
 
 //Выполнение простой задачи
-func SimplTask(chanTask chan bool, g int) {
+func SimplTask(wg1 *sync.WaitGroup, chanTask chan bool, g int) {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
-
 	done := make(chan bool)
+
 	go func() {
-		r := rand.Intn(5)
-		//r := 3
+		//r := rand.Intn(5)
+		r := 4
 		time.Sleep(time.Duration(r) * time.Second)
 		done <- true
 	}()
+
 	for {
 		select {
 		case <-done:
-			fmt.Println(g, "Имитация бурной деятельности...  ", time.Now())
 			chanTask <- true
+			wg1.Done()
+			fmt.Println(g, "Имитация бурной деятельности...  ", time.Now())
 			return
 		}
 	}
