@@ -11,6 +11,12 @@ type RateLmt struct {
 	MaxPerMinute int //максимальное количество задач в течении минуты
 }
 
+//буфферное значение канала с флагом
+type RsTrig struct {
+	S int
+	R bool
+}
+
 func (rateLmt *RateLmt) Ratelimit(wg *sync.WaitGroup, ch <-chan int) {
 	defer wg.Done()
 	var wg1 sync.WaitGroup
@@ -19,8 +25,9 @@ func (rateLmt *RateLmt) Ratelimit(wg *sync.WaitGroup, ch <-chan int) {
 	j := 0         // счетчик в минуту
 	countTask := 0 //счетчик неотработаных
 	t := time.Now()
-	flagOk := false //Флаг, триггер для послед канала
-	bufChan := -1   //буфферное значение канала
+	flagOk := false    //Флаг, триггер для послед канала
+	var bufChan RsTrig //буфферное значение канала
+	bufChan.R = false
 	timeMax := 60 * time.Second
 	done := make(chan bool) //канал о выполнении задачи
 
@@ -29,13 +36,13 @@ exit:
 		if (time.Since(t) < timeMax) && (j < rateLmt.MaxPerMinute) {
 			if i < rateLmt.MaxSameTime {
 
-				if bufChan != -1 {
+				if bufChan.R {
 					wg1.Add(1)
-					go SimplTask(&wg1, done, bufChan) //выполнение задачи
+					go SimplTask(&wg1, done, bufChan.S) //выполнение задачи
 					countTask++
 					i++
 					j++
-					bufChan = -1
+					bufChan.R = false
 
 				} else {
 					c, ok := <-ch
@@ -63,7 +70,8 @@ exit:
 				if !ok {
 					break exit
 				} else {
-					bufChan = c
+					bufChan.S = c
+					bufChan.R = true
 					flagOk = false
 				}
 			}
